@@ -76,6 +76,26 @@ export function formatRadnoVrijeme(rv: RadnoVrijeme): string {
   return `${label}: ${raspored}`;
 }
 
+export type Svježina = 'svježe' | 'staro' | 'nepoznato';
+
+export function svjezinaStatusa(lastUpdated: string | null): Svježina {
+  if (!lastUpdated) return 'nepoznato';
+  const diffH = (Date.now() - new Date(lastUpdated).getTime()) / 3600000;
+  if (diffH < 1) return 'svježe';
+  if (diffH < 3) return 'staro';
+  return 'nepoznato';
+}
+
+export function svjezinaLabel(lastUpdated: string | null): string {
+  if (!lastUpdated) return 'Nepoznato';
+  const diffMin = Math.floor((Date.now() - new Date(lastUpdated).getTime()) / 60000);
+  if (diffMin < 1) return 'upravo';
+  if (diffMin < 60) return `${diffMin} min`;
+  const h = Math.floor(diffMin / 60);
+  if (h < 3) return `${h}h`;
+  return 'Nepoznato';
+}
+
 export function formatPotpunoRadnoVrijeme(rv: RadnoVrijeme): string[] {
   const linije: string[] = [];
   if (rv.pon_pet) linije.push(`Pon–Pet: ${rv.pon_pet === '00:00-24:00' ? '0–24h' : rv.pon_pet}`);
