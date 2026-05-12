@@ -1,5 +1,7 @@
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, RefreshControl, KeyboardAvoidingView, Platform } from 'react-native';
 import { useState, useEffect } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useUser } from '../context/user';
 
 type Objava = {
@@ -28,7 +30,13 @@ export default function FeedScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [tekst, setTekst] = useState('');
   const [šaljem, setŠaljem] = useState(false);
-  const { username } = useUser();
+  const { username, logout } = useUser();
+  const router = useRouter();
+
+  async function handleLogout() {
+    await logout();
+    router.replace('/login');
+  }
 
   useEffect(() => {
     ucitajObjave();
@@ -81,8 +89,15 @@ export default function FeedScreen() {
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Feed</Text>
-        <Text style={styles.headerSubtitle}>Zagreb — što se događa</Text>
+        <View style={styles.headerRow}>
+          <View>
+            <Text style={styles.headerTitle}>Feed</Text>
+            <Text style={styles.headerSubtitle}>Zagreb — što se događa</Text>
+          </View>
+          <TouchableOpacity onPress={handleLogout}>
+            <Text style={styles.logout}>Odjava</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView
@@ -95,9 +110,15 @@ export default function FeedScreen() {
           objave.map(o => (
             <View key={o.id} style={styles.card}>
               <View style={styles.cardTop}>
-                <Text style={styles.username}>{o.username}</Text>
+                <View style={styles.userBadge}>
+                  <Ionicons name="person-circle-outline" size={14} color="#dc2626" />
+                  <Text style={styles.usernameText}>{o.username}</Text>
+                </View>
                 {o.lokacija_naziv && (
-                  <Text style={styles.lokacija}>📍 {o.lokacija_naziv}</Text>
+                  <View style={styles.lokacijaWrap}>
+                    <Ionicons name="location-outline" size={12} color="#6b7280" />
+                    <Text style={styles.lokacija}>{o.lokacija_naziv}</Text>
+                  </View>
                 )}
                 <Text style={styles.vrijeme}>{vremeProšlo(o.timestamp)}</Text>
               </View>
@@ -123,7 +144,10 @@ export default function FeedScreen() {
             onPress={posaljiObjavu}
             disabled={!tekst.trim() || šaljem}
           >
-            <Text style={styles.sendBtnText}>→</Text>
+            {šaljem
+              ? <ActivityIndicator size="small" color="white" />
+              : <Ionicons name="send" size={18} color="white" />
+            }
           </TouchableOpacity>
         </View>
         <Text style={styles.counter}>{tekst.length}/200</Text>
@@ -136,14 +160,18 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f9fafb' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: { backgroundColor: '#dc2626', paddingTop: 60, paddingBottom: 16, paddingHorizontal: 20 },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
   headerTitle: { color: 'white', fontSize: 24, fontWeight: 'bold' },
   headerSubtitle: { color: '#fca5a5', fontSize: 13, marginTop: 2 },
+  logout: { color: '#fca5a5', fontSize: 13 },
   list: { flex: 1, padding: 16 },
   prazno: { textAlign: 'center', color: '#9ca3af', marginTop: 40, fontSize: 15 },
   card: { backgroundColor: 'white', borderRadius: 14, padding: 14, marginBottom: 10, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4, elevation: 2 },
   cardTop: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: 'wrap' },
-  username: { fontWeight: '700', color: '#dc2626', fontSize: 13 },
-  lokacija: { fontSize: 12, color: '#6b7280', flex: 1 },
+  userBadge: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  usernameText: { fontWeight: '700', color: '#dc2626', fontSize: 13 },
+  lokacijaWrap: { flexDirection: 'row', alignItems: 'center', gap: 3, flex: 1 },
+  lokacija: { fontSize: 12, color: '#6b7280' },
   vrijeme: { fontSize: 12, color: '#9ca3af' },
   tekst: { fontSize: 15, color: '#111827', lineHeight: 22 },
   inputContainer: { backgroundColor: 'white', padding: 16, borderTopWidth: 1, borderTopColor: '#f3f4f6' },
